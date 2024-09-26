@@ -18,6 +18,7 @@ experiment_output_path: ${project_root_path}/output/${data.train.dataset}/${expe
 pred_path: ${experiment_output_path}/prediction
 
 ckpt_path: null
+image_path: null
 experiment_name: null
 train_seed: 123
 test_seed: 123

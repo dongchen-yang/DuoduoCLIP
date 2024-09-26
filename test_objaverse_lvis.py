@@ -35,8 +35,9 @@ def run_objaverse_test_epoch(cfg, model):
         data_dict['mv_images'] = data_dict['mv_images'].to(torch.float16) / 255
         for data_key in ("mv_images", "category_clip_features", "class_idx"):
             data_dict[data_key] = data_dict[data_key].to(model.device)
-        output_dict = model(data_dict)
 
+        output_dict = model(data_dict)
+        # raise Exception
         logits = F.normalize(output_dict["mv_image_features"], dim=1) @ F.normalize(data_dict["category_clip_features"], dim=1).T
 
         for k in top_ks:
@@ -61,6 +62,8 @@ def run_objaverse_test_epoch(cfg, model):
 def main(_cfg):
     ckpt_path = hf_hub_download(repo_id='3dlg-hcvc/DuoduoCLIP', filename=_cfg.ckpt_path)
     duoduoclip = DuoduoCLIP.load_from_checkpoint(ckpt_path)
+    # print(duoduoclip)
+    # raise Exception
     duoduoclip.eval()
     duoduoclip.cuda()
 

@@ -9,6 +9,7 @@ import torchvision.transforms as transforms
 
 from .. import custom_clip
 
+
 def get_model(base_name='ViT-L-14', pretrained_name='laion2b_s32b_b82k'):
     tokenizer = custom_clip.get_tokenizer(base_name)
 
@@ -33,7 +34,13 @@ class DuoduoCLIP(pl.LightningModule):
         self.cfg = cfg
         self.layers_threshold = cfg.model.network.layers_threshold
         self.contrastive_loss = hydra.utils.instantiate(cfg.model.loss.flag)
+        # print("cfg.model.network.base_name",cfg.model.network.base_name)
+        # print("cfg.model.network.pretrained_name",cfg.model.network.pretrained_name)
+        # raise Exception
         self.duoduoclip, self.tokenizer = get_model(cfg.model.network.base_name, cfg.model.network.pretrained_name)
+        # print(cfg.model.network.base_name)
+        # print(cfg.model.network.pretrained_name)
+        # raise Exception
 
         self.unlock_mha()
 
@@ -78,6 +85,9 @@ class DuoduoCLIP(pl.LightningModule):
             raise NotImplementedError
         
         mv_images = mv_images.to(torch.float16).permute(0, 1, 4, 2, 3) / 255
+
+        # print(mv_images.shape)
+        # raise Exception
         if mv_images.shape[3] != 224 or mv_images.shape[4] != 224:
             mv_images = F.interpolate(mv_images, size=224, mode='bilinear', align_corners=False)
 
@@ -111,7 +121,6 @@ class DuoduoCLIP(pl.LightningModule):
             mvimgnet_mv_images = norm_transform(mvimgnet_mv_images)
 
             num_frames_list = [1] * self.layers_threshold + [f] * (self.duoduoclip.visual.transformer.layers - self.layers_threshold) + [f]
-
             mvimgnet_mv_image_features = self.duoduoclip.encode_image(mvimgnet_mv_images, num_frames=num_frames_list)
 
             mv_image_features = torch.cat((mv_image_features, mvimgnet_mv_image_features), dim=0)
@@ -120,13 +129,14 @@ class DuoduoCLIP(pl.LightningModule):
 
             data_dict["text_features"] = torch.cat((data_dict["objaverse"]["text_features"], data_dict["mvimgnet"]["text_features"]), dim=0)
             data_dict["image_features"] = torch.cat((data_dict["objaverse"]["image_features"], data_dict["mvimgnet"]["image_features"]), dim=0)
+            # print(output_dict)
+            # raise Exception
         else:
             bs, f, c, h, w = data_dict['mv_images'].shape
             mv_images = data_dict['mv_images'].reshape(bs * f, c, h, w)
             mv_images = norm_transform(mv_images)
 
             num_frames_list = [1] * self.layers_threshold + [f] * (self.duoduoclip.visual.transformer.layers - self.layers_threshold) + [f]
-            
             mv_image_features = self.duoduoclip.encode_image(mv_images, num_frames=num_frames_list)
 
             output_dict = {"mv_image_features":  mv_image_features}
@@ -187,3 +197,4 @@ class DuoduoCLIP(pl.LightningModule):
         acc = self.objaverse_lvis_acc_top_5.compute()
         self.log(f"val_eval/objaverse_lvis_acc_top_5", acc, sync_dist=True)
         self.objaverse_lvis_acc_top_5.reset()
+

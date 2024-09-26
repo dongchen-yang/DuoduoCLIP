@@ -3,3 +3,5 @@ output
 pretrained
 __pycache__
 dataset/data
+model_to_idx.json
+mvclip_features.h5

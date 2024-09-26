@@ -535,6 +535,7 @@ class VisionTransformer(nn.Module):
         return pooled, tokens
 
     def forward(self, x: torch.Tensor, num_frames: list, output_tokens=False):
+        # print("x.shape: ", x.shape)
         x = self.conv1(x)  # shape = [*, width, grid, grid]
         x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
